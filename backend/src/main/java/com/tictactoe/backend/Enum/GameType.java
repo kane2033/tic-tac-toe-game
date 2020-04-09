@@ -1,4 +1,4 @@
-package com.tictactoe.backend.Enums;
+package com.tictactoe.backend.Enum;
 
 public enum GameType {
     VS_Компьютер,

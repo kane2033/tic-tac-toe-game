@@ -1,10 +1,7 @@
-package com.tictactoe.backend.Entities;
+package com.tictactoe.backend.Entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Check;
 
 import javax.persistence.*;
 

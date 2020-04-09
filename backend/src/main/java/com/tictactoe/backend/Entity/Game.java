@@ -1,8 +1,8 @@
-package com.tictactoe.backend.Entities;
+package com.tictactoe.backend.Entity;
 
-import com.tictactoe.backend.Enums.GameStatus;
-import com.tictactoe.backend.Enums.GameType;
-import com.tictactoe.backend.Enums.Piece;
+import com.tictactoe.backend.Enum.GameStatus;
+import com.tictactoe.backend.Enum.GameType;
+import com.tictactoe.backend.Enum.Piece;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

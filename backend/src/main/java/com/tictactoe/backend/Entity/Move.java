@@ -1,4 +1,4 @@
-package com.tictactoe.backend.Entities;
+package com.tictactoe.backend.Entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
