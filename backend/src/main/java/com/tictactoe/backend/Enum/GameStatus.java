@@ -1,9 +1,9 @@
 package com.tictactoe.backend.Enum;
 
 public enum GameStatus {
-    В_процессе,
-    Игрок1_победил,
-    Игрок2_победил,
-    Ничья,
-    Ожидание_игрока
+    In_Progress,
+    Player1_Won,
+    Player2_Won,
+    Tie,
+    Waiting_Player2
 }

@@ -14,13 +14,20 @@ import javax.persistence.*;
 @Entity
 @Getter
 @Setter
-@Check(constraints = "first_player_piece_code = 'O' or first_player_piece_code = 'X' " +
-        "and game_type = 'VS_Компьютер' or game_type = 'VS_Игрок' " +
-        "and game_status = 'В_процессе' or game_status = 'Игрок1_победил' or game_status = 'Игрок2_победил'" +
-        "or game_status = 'Ничья' or game_status = 'Ожидание_игрока' ")
+//@Check(constraints = "first_player_piece_code = 'O' or first_player_piece_code = 'X' " +
+//        "and game_type = 'VS_Computer' or game_type = 'VS_Player' " +
+//        "and game_status = 'In_Progress' or game_status = 'Player1_Won' or game_status = 'Player2_Won'" +
+//        "or game_status = 'Tie' or game_status = 'Waiting_Player2' ")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Game {
+
+    public Game(Player firstPlayer, Piece firstPlayerPieceCode, GameType gameType, GameStatus gameStatus) {
+        this.firstPlayer = firstPlayer;
+        this.firstPlayerPieceCode = firstPlayerPieceCode;
+        this.gameType = gameType;
+        this.gameStatus = gameStatus;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -32,7 +39,7 @@ public class Game {
     private Player firstPlayer;
 
     @ManyToOne
-    @JoinColumn(name = "second_player_id", nullable = true)
+    @JoinColumn(name = "second_player_id")
     private Player secondPlayer;
 
     @Enumerated(EnumType.STRING)
@@ -43,4 +50,5 @@ public class Game {
 
     @Enumerated(EnumType.STRING)
     private GameStatus gameStatus;
+
 }
