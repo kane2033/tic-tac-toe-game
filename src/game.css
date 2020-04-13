@@ -7,6 +7,24 @@ ol, ul {
     padding-left: 30px;
 }
 
+#games-table {
+    border-collapse: collapse;
+    width: 35%;
+}
+
+#games-table td, #games-table th {
+    border-bottom: 1px solid #ddd;
+    padding: 8px;
+}
+
+#games-table tr:hover {background-color: #ddd;}
+
+#games-table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+}
+
 .board-row:after {
     clear: both;
     content: "";
