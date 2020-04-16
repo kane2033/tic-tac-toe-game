@@ -3,14 +3,63 @@ import ReactDOM from 'react-dom';
 import Game from './game.js';
 import {BrowserRouter, Switch, Link, Route} from "react-router-dom";
 import axios from "axios";
+axios.defaults.withCredentials = true;
 
 const Router = BrowserRouter;
+
+class UserNameInput extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            userName: '',
+        };
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleChange(event) {
+        this.setState({
+            userName: event.target.value
+        });
+    }
+
+    handleSubmit(event) {
+        if (this.state.userName === '') {
+            alert("Поле имени пользователя пустое");
+        }
+        else {
+            axios
+                .post('http://localhost:8080/api/player/login',
+                    {userName: this.state.userName},
+                    {withCredentials: true})
+                .then(response => {
+                    console.log(response.data);
+                    alert(JSON.stringify(response.data));
+                })
+                .catch(error => {
+                    console.log(error);
+                    alert(error);
+                });
+        }
+        event.preventDefault();
+    }
+
+    render() {
+        return (
+            <form onSubmit={this.handleSubmit} className="form" id="login-form">
+                <h2>Войти как:</h2>
+                <input name="userName" type="text" value={this.state.userName} onChange={this.handleChange} />
+                <input type="submit" value="Войти" />
+            </form>
+        );
+    }
+}
+
 
 class StartGameForm extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            userName: '',
             gameType: 'VS_Player',
             selectedPiece: 'X',
         };
@@ -27,16 +76,11 @@ class StartGameForm extends React.Component {
 
     //POST запрос на создание игры
     createGame() {
-        if (this.state.userName === '') {
-            alert("Поле имени пользователя пустое");
-            return;
-        }
-        axios
+        axios //убрать имя
             .post('http://localhost:8080/api/game/create', {
-                userName: this.state.userName,
                 gameType: this.state.gameType,
                 selectedPiece: this.state.selectedPiece,
-            })
+            }, {withCredentials: true})
             .then(response => {
                 console.log(response.data);
                 alert(JSON.stringify(response.data));
@@ -45,6 +89,7 @@ class StartGameForm extends React.Component {
                 console.log(error);
                 alert(error);
             });
+        window.location.reload();
     }
 
     handleSubmit(event) {
@@ -54,9 +99,9 @@ class StartGameForm extends React.Component {
 
     render() {
         return (
-            <form onSubmit={this.handleSubmit}>
-                <label>Имя:</label><br />
-                <input name="userName" type="text" value={this.state.userName} onChange={this.handleChange} /> <br/>
+            <form onSubmit={this.handleSubmit} className="form" id="start-form">
+                <h2>Создать игру:</h2>
+                {/*<input name="userName" type="text" value={this.state.userName} onChange={this.handleChange} /> <br/>*/}
                 <label>Тип игры:</label>
                 <select name="gameType" value={this.state.gameType} onChange={this.handleChange}>
                     <option value="VS_Player">VS_Player</option>
@@ -67,7 +112,7 @@ class StartGameForm extends React.Component {
                     <option value="X">X</option>
                     <option value="O">O</option>
                 </select> <br/>
-                <input type="submit" value="Начать игру" />
+                <input type="submit" value="Создать игру" />
             </form>
         );
     }
@@ -82,7 +127,6 @@ class GamesList extends React.Component {
     }
 
     componentDidMount() {
-        //наверное нужно обработать массив жсонов
         axios
             .get('http://localhost:8080/api/game/list')
             .then(response => {
@@ -112,16 +156,16 @@ class GamesList extends React.Component {
 
     render () {
         return (
-            <table id="games-table">
-                <tr>
-                    <th>Список игроков</th>
-                    <th>Статус игры</th>
-                    <th>Тип игры</th>
-                    <th> </th>
-                </tr>
-                {this.formTable(this.state.games)}
-            </table>
-
+                <table id="games-table">
+                    <thead>Список доступных игр:</thead>
+                    <tr>
+                        <th>Список игроков</th>
+                        <th>Статус игры</th>
+                        <th>Тип игры</th>
+                        <th> </th>
+                    </tr>
+                    {this.formTable(this.state.games)}
+                </table>
         );
     }
 }
@@ -137,12 +181,11 @@ class Menu extends React.Component {
     render() {
         return (
             <div>
-                <div>
+                <div id="forms">
+                    <UserNameInput />
                     <StartGameForm />
                 </div>
-                <div>
                     <GamesList />
-                </div>
             </div>
         );
     }

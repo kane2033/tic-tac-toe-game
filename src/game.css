@@ -7,14 +7,63 @@ ol, ul {
     padding-left: 30px;
 }
 
+#forms {
+    float: left;
+}
+
+.form {
+    margin-left: 50px;
+    margin-right: 150px;
+    width: 50%;
+}
+
+#login-form {
+    vertical-align: top;
+}
+
+#start-form {
+    margin-left: 50px;
+    margin-right: 150px;
+}
+
+input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type=submit] {
+    width: 100%;
+    font-weight: bold;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+input[type=submit]:hover {
+    background-color: #45a049;
+}
+
 #games-table {
     border-collapse: collapse;
     width: 35%;
 }
 
+#games-table thead {
+    font-weight: bold;
+    font-size: 27px;
+}
+
 #games-table td, #games-table th {
     border-bottom: 1px solid #ddd;
     padding: 8px;
+    font-weight: normal;
 }
 
 #games-table tr:hover {background-color: #ddd;}
