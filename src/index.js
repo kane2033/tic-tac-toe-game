@@ -38,7 +38,7 @@ class UserNameInput extends React.Component {
                 })
                 .catch(error => {
                     console.log(error);
-                    alert(error);
+                    alert(error.data);
                 });
         }
         event.preventDefault();
