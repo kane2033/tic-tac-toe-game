@@ -8,11 +8,10 @@ import com.tictactoe.backend.Repository.IPlayerRepository;
 import com.tictactoe.backend.Request.AddGameRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
@@ -25,14 +24,13 @@ public class GameController {
     @Autowired
     IPlayerRepository playerRepository;
 
-    //@RequestMapping(value = "/create", method = { RequestMethod.POST, RequestMethod.GET })
+    //создается игра от имени игрока сессии с параметрами, переданными в пост запрос
     @PostMapping(path = "/create")
-    public Game createNewGame(@RequestBody AddGameRequest addGameRequest) {
-        Player player = playerRepository.findOneByUserName(addGameRequest.getUserName());
-        if (player == null) {
-            player = new Player(addGameRequest.getUserName());
+    public ResponseEntity<?> createNewGame(@RequestBody AddGameRequest addGameRequest, HttpSession session) {
+        Player player = (Player)session.getAttribute("player");
+        if (player == null) { //если
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Имя не введено");
         }
-        playerRepository.save(player);
         Game game = new Game(
                 player,
                 addGameRequest.getSelectedPiece(),
@@ -40,8 +38,7 @@ public class GameController {
                 GameStatus.Waiting_Player2
         );
         gameRepository.save(game);
-        //return ResponseEntity.status(HttpStatus.OK).body("Игра успешно создана!");
-        return game;
+        return ResponseEntity.status(HttpStatus.OK).body("Игра успешно создана!");
     }
 
     //возвращает список игр, где ожидается игрок 2

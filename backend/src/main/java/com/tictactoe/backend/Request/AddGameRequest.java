@@ -13,7 +13,6 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AddGameRequest {
 
-    private String userName;
     private GameType gameType;
     private Piece selectedPiece;
 }
