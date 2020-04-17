@@ -28,9 +28,11 @@ public class GameController {
     @PostMapping(path = "/create")
     public ResponseEntity<?> createNewGame(@RequestBody AddGameRequest addGameRequest, HttpSession session) {
         Player player = (Player)session.getAttribute("player");
-        if (player == null) { //если
+        //если игрок еще не зашел в сессию
+        if (player == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Имя не введено");
         }
+        //создание игры при наличии игрока в сессии
         Game game = new Game(
                 player,
                 addGameRequest.getSelectedPiece(),
@@ -41,9 +43,41 @@ public class GameController {
         return ResponseEntity.status(HttpStatus.OK).body("Игра успешно создана!");
     }
 
-    //возвращает список игр, где ожидается игрок 2
-    @RequestMapping( value = "/list", method = RequestMethod.GET, produces = "application/json")
+    //возвращает все игры
+    @RequestMapping(path = "/list", method = RequestMethod.GET, produces = "application/json")
     public List<Game> getWaitingGames() {
-        return gameRepository.findByGameStatus(GameStatus.Waiting_Player2);
+        return gameRepository.findTop50ByOrderByGameStatusDesc();
+    }
+
+    //запрос на вход в игру
+    @GetMapping(path = "/join")
+    public ResponseEntity<?> joinGame(@RequestParam int gameId, HttpSession session) {
+        Player sessionPlayer = (Player) session.getAttribute("player");
+        //если игрок еще не зашел в сессию
+        if (sessionPlayer == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Имя не введено");
+        }
+
+        Game selectedGame = gameRepository.findById(gameId);
+        Player firstPlayerFromGame = selectedGame.getFirstPlayer();
+        Player secondPlayerFromGame = selectedGame.getSecondPlayer();
+
+        //если нет второго игрока
+        if (selectedGame.getGameStatus() == GameStatus.Waiting_Player2) {
+            selectedGame.setSecondPlayer(sessionPlayer);
+            selectedGame.setGameStatus(GameStatus.In_Progress);
+            gameRepository.save(selectedGame);
+            return  ResponseEntity.status(HttpStatus.OK).body("Вы успешно присоединились к игре №" + selectedGame.getId());
+        }
+
+        //если игрок перезаходит в игру
+        if (sessionPlayer.getId() == firstPlayerFromGame.getId() ||
+                sessionPlayer.getId() == secondPlayerFromGame.getId()) {
+            return ResponseEntity.status(HttpStatus.OK).body("Вы перезашли в игру №" + selectedGame.getId());
+        }
+
+        //если есть игрок, который хочет присоединиться к игре в процессе и не считается как игрок,
+        //он добавляется как наблюдатель
+        return ResponseEntity.status(HttpStatus.OK).body("Вы зашли как наблюдатель в игру №" + selectedGame.getId());
     }
 }

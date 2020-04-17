@@ -35,7 +35,7 @@ public class PlayerController {
         }
         //если юзер уже зашел под именем, которое отправляется в запросе, возвращается ошибка
         Player currentPlayer = (Player)request.getSession().getAttribute("player");
-        if (currentPlayer.getId() == player.getId()) {
+        if (currentPlayer != null && currentPlayer.getId() == player.getId()) {
             return ResponseEntity.status(HttpStatus.CREATED).body("Вы уже зашли под этим именем. Ваша сессия: " + request.getSession().getId());
         }
 

@@ -1,7 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Game from './game.js';
-import {BrowserRouter, Switch, Link, Route} from "react-router-dom";
+import {BrowserRouter, Switch, Route, Redirect} from "react-router-dom";
+
 import axios from "axios";
 axios.defaults.withCredentials = true;
 
@@ -34,11 +35,11 @@ class UserNameInput extends React.Component {
                     {withCredentials: true})
                 .then(response => {
                     console.log(response.data);
-                    alert(JSON.stringify(response.data));
+                    alert((response.data));
                 })
                 .catch(error => {
-                    console.log(error);
-                    alert(error.data);
+                    console.log(JSON.stringify(error.response.data));
+                    alert(JSON.stringify(error.response.data));
                 });
         }
         event.preventDefault();
@@ -76,7 +77,7 @@ class StartGameForm extends React.Component {
 
     //POST запрос на создание игры
     createGame() {
-        axios //убрать имя
+        axios
             .post('http://localhost:8080/api/game/create', {
                 gameType: this.state.gameType,
                 selectedPiece: this.state.selectedPiece,
@@ -84,12 +85,12 @@ class StartGameForm extends React.Component {
             .then(response => {
                 console.log(response.data);
                 alert(JSON.stringify(response.data));
+                window.location.reload(); //перезагрузка страницы при добавлении игры
             })
             .catch(error => {
-                console.log(error);
-                alert(error);
+                console.log(JSON.stringify(error.response.data));
+                alert(JSON.stringify(error.response.data));
             });
-        window.location.reload();
     }
 
     handleSubmit(event) {
@@ -133,11 +134,11 @@ class GamesList extends React.Component {
                 this.setState({
                     games: response.data
                 });
-                console.log(response.data)
+                console.log(response.data);
             })
             .catch(error => {
-                console.log(error);
-                alert(error);
+                console.log(JSON.stringify(error.response.data));
+                alert(JSON.stringify(error.response.data));
             });
     }
 
@@ -148,7 +149,7 @@ class GamesList extends React.Component {
             rows.push(<th>{games[i].firstPlayer.userName}</th>); //игроки
             rows.push(<th>{games[i].gameStatus}</th>); //статус игры
             rows.push(<th>{games[i].gameType}</th>); //тип игры
-            rows.push(<th>{StartGameButton()}</th>);
+            rows.push(<th><StartGameButton gameId={games[i].id}/></th>); //кнопка начала игры
             table.push(<tr>{rows}</tr>);
         }
         return table;
@@ -170,10 +171,47 @@ class GamesList extends React.Component {
     }
 }
 
-function StartGameButton() {
-    return (
-        <Link to="/game" className="button">Начать игру</Link>
-    );
+class StartGameButton extends React.Component{
+    constructor(props) {
+        super(props);
+        this.state = {
+            gameId : props.gameId,
+            redirect: false,
+        }
+    }
+
+    redirectToGame = () => {
+        this.props.history.push('/game');
+    };
+
+    handleClick() {
+        axios.get('http://localhost:8080/api/game/join', {
+            params: {
+                gameId: this.state.gameId
+            }
+        })
+            .then(response => {
+                console.log(response.data);
+                alert(JSON.stringify(response.data));
+                this.setState({redirect: true});
+            })
+            .catch(error => {
+                console.log(JSON.stringify(error.response.data));
+                alert(JSON.stringify(error.response.data));
+            })
+    }
+
+    render() {
+        //переход на страницу если
+        if (this.state.redirect) {
+            return <Redirect to="/game" push/>
+        }
+        return (
+            <button className="button" onClick={() => { this.handleClick()}}>
+                Присоединиться к игре ID:{this.state.gameId}
+            </button>
+        );
+    }
 }
 
 class Menu extends React.Component {
@@ -192,7 +230,7 @@ class Menu extends React.Component {
 }
 
 ReactDOM.render(
-    <Router>
+    <Router >
         <Switch>
             <Route exact path="/" component={Menu} />
             <Route path="/game" component={Game} />
