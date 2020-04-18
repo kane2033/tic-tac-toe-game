@@ -23,11 +23,14 @@ public class Move {
     @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
-    @Column(name = "board_row", nullable = false)
-    private int boardRow;
+    @Column(name = "x", nullable = false)
+    private int x;
 
-    @Column(name = "board_column", nullable = false)
+    @Column(name = "y", nullable = false)
     private int boardColumn;
+
+    @Column(name = "piece", nullable = false)
+    private char piece;
 
     @ManyToOne
     @JoinColumn(name = "player_id", nullable = false)
