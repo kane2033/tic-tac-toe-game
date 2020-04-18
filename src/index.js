@@ -180,10 +180,6 @@ class StartGameButton extends React.Component{
         }
     }
 
-    redirectToGame = () => {
-        this.props.history.push('/game');
-    };
-
     handleClick() {
         axios.get('http://localhost:8080/api/game/join', {
             params: {
@@ -196,15 +192,23 @@ class StartGameButton extends React.Component{
                 this.setState({redirect: true});
             })
             .catch(error => {
-                console.log(JSON.stringify(error.response.data));
-                alert(JSON.stringify(error.response.data));
+                if (error.response) {
+                    console.log(JSON.stringify(error.response.data));
+                    alert(JSON.stringify(error.response.data));
+                }
+
             })
     }
 
     render() {
-        //переход на страницу если
+        //переход на страницу, если процесс присоединения к игре успешен
         if (this.state.redirect) {
-            return <Redirect to="/game" push/>
+            return (
+                <Redirect push to={{
+                    pathname: "/game",
+                    state: { gameId: this.state.gameId }
+                }} />
+            );
         }
         return (
             <button className="button" onClick={() => { this.handleClick()}}>

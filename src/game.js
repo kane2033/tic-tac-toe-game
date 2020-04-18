@@ -2,8 +2,8 @@ import React from 'react';
 //import ReactDOM from 'react-dom';
 import './game.css';
 
-const GameExport = () => {
-    return <Game />
+const GameExport = (props) => {
+    return <Game id={props.location.state.gameId}/>
 };
 export default GameExport;
 
@@ -188,8 +188,15 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            gameId: props.id
+        }
+    }
 
     render() {
+        //alert(this.state.gameId)
         return (
             <div className="game">
                 <div className="game-board">
