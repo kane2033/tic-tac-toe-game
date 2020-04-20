@@ -22,9 +22,10 @@ import javax.persistence.*;
 @AllArgsConstructor
 public class Game {
 
-    public Game(Player firstPlayer, Piece firstPlayerPieceCode, GameType gameType, GameStatus gameStatus) {
+    public Game(Player firstPlayer, Piece firstPlayerPieceCode, Piece secondPlayerPiece, GameType gameType, GameStatus gameStatus) {
         this.firstPlayer = firstPlayer;
-        this.firstPlayerPieceCode = firstPlayerPieceCode;
+        this.firstPlayerPiece = firstPlayerPieceCode;
+        this.secondPlayerPiece = secondPlayerPiece;
         this.gameType = gameType;
         this.gameStatus = gameStatus;
     }
@@ -43,7 +44,10 @@ public class Game {
     private Player secondPlayer;
 
     @Enumerated(EnumType.STRING)
-    private Piece firstPlayerPieceCode;
+    private Piece firstPlayerPiece;
+
+    @Enumerated(EnumType.STRING)
+    private Piece secondPlayerPiece;
 
     @Enumerated(EnumType.STRING)
     private GameType gameType;

@@ -3,6 +3,7 @@ package com.tictactoe.backend.Controller;
 import com.tictactoe.backend.Entity.Game;
 import com.tictactoe.backend.Entity.Player;
 import com.tictactoe.backend.Enum.GameStatus;
+import com.tictactoe.backend.Enum.Piece;
 import com.tictactoe.backend.Repository.IGameRepository;
 import com.tictactoe.backend.Repository.IPlayerRepository;
 import com.tictactoe.backend.Request.AddGameRequest;
@@ -35,7 +36,8 @@ public class GameController {
         //создание игры при наличии игрока в сессии
         Game game = new Game(
                 player,
-                addGameRequest.getSelectedPiece(),
+                addGameRequest.getSelectedPiece(), //символ игрока 1
+                addGameRequest.getSelectedPiece() == Piece.X ? Piece.O : Piece.X, //символ игрока 2
                 addGameRequest.getGameType(),
                 GameStatus.Waiting_Player2
         );
@@ -79,5 +81,11 @@ public class GameController {
         //если есть игрок, который хочет присоединиться к игре в процессе и не считается как игрок,
         //он добавляется как наблюдатель
         return ResponseEntity.status(HttpStatus.OK).body("Вы зашли как наблюдатель в игру №" + selectedGame.getId());
+    }
+
+    //запрос на получение сущности игры
+    @GetMapping(path = "/")
+    public Game getGameById(@RequestParam int gameId) {
+        return gameRepository.findById(gameId);
     }
 }
