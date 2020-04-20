@@ -9,6 +9,9 @@ import java.util.List;
 
 public interface IMoveRepository extends CrudRepository<Move, Long> {
     List<Move> findByGame(Game game);
+    List<Move> findByGameOrderByIdAsc(Game game);
+    boolean existsMoveByXAndY(int x, int y);
+    Move findTopByGameOrderByIdDesc(Game game);
     List<Move> findByGameAndPlayer(Game game, Player player);
     int countByGameAndPlayer(Game game, Player player);
 }

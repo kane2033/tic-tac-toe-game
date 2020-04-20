@@ -1,5 +1,6 @@
 package com.tictactoe.backend.Entity;
 
+import com.tictactoe.backend.Enum.Piece;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,14 @@ import javax.persistence.*;
 @AllArgsConstructor
 public class Move {
 
+    public Move(Game game, int x, int y, Piece piece, Player player) {
+        this.game = game;
+        this.x = x;
+        this.y = y;
+        this.piece = piece;
+        this.player = player;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", nullable = false)
@@ -27,10 +36,11 @@ public class Move {
     private int x;
 
     @Column(name = "y", nullable = false)
-    private int boardColumn;
+    private int y;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "piece", nullable = false)
-    private char piece;
+    private Piece piece;
 
     @ManyToOne
     @JoinColumn(name = "player_id", nullable = false)
