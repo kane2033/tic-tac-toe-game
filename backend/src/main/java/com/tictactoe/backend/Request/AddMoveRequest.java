@@ -16,5 +16,4 @@ public class AddMoveRequest {
     private int gameId;
     private int x;
     private int y;
-    private Piece piece;
 }
