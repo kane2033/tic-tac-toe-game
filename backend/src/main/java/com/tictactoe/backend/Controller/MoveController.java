@@ -25,10 +25,46 @@ public class MoveController {
     @Autowired
     IGameRepository gameRepository;
 
+    public int getPlayerPlace(int sessionPlayerId, int firstPlayerId, int secondPlayerId) {
+        return sessionPlayerId == firstPlayerId ? 1 : sessionPlayerId == secondPlayerId ? 2 : 3;
+    }
+
+    public Piece getNewPiece(int sessionPlayerPlace, Piece firstPlayerPiece, Piece secondPlayerPiece) {
+        return sessionPlayerPlace == 1 ? firstPlayerPiece : secondPlayerPiece;
+    }
+
+    public boolean isSessionPlayerTurn(Piece newPiece, Move lastMove) {
+        Piece lastPiece = lastMove == null ? Piece.O : lastMove.getPiece(); // lastPiece = O, когда это первый ход и lastMove == null
+        return !(newPiece == lastPiece);
+    }
+
     //запрос на получение сделанных ходов в определенной игре
     @GetMapping(path = "/list")
     public List<Move> getMovesByGame(@RequestParam int gameId) {
         return moveRepository.findByGameOrderByIdAsc(gameRepository.findById(gameId));
+    }
+
+    //запрос на получение последнего символа (запрашивается в качестве обновления,
+    // когда настала очередь ходить другому игроку
+    @GetMapping(path="/last")
+    public Move getLastPiece(@RequestParam int gameId) {
+        return moveRepository.findTopByGameOrderByIdDesc(gameRepository.findById(gameId));
+    }
+
+    //возвращает http 200, если сейчас ход отправившего игрока
+    //и http 406, если нет
+    @GetMapping(path="/turn")
+    public ResponseEntity<?> checkTurn(@RequestParam int gameId, HttpSession session) {
+        Player sessionPlayer = (Player) session.getAttribute("player");
+        Game currentGame = gameRepository.findById(gameId);
+        Move lastMove = moveRepository.findTopByGameOrderByIdDesc(gameRepository.findById(gameId));
+
+        int playerPlace = getPlayerPlace(sessionPlayer.getId(), currentGame.getFirstPlayer().getId(), currentGame.getSecondPlayer().getId());
+        Piece newPiece = getNewPiece(playerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
+        boolean isTurn = isSessionPlayerTurn(newPiece, lastMove);
+
+        return isTurn ? new ResponseEntity<>(HttpStatus.OK) :
+                new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
     }
 
     //запрос на добавление X/O в поле
@@ -42,8 +78,8 @@ public class MoveController {
 
         Game currentGame = gameRepository.findById(addMoveRequest.getGameId());
         //получаем, каким конкретно игроком является отправивший запрос игрок (нужно для определения символа)
-        int sessionPlayerPlace = sessionPlayer.getId() == currentGame.getFirstPlayer().getId() ? 1 :
-                sessionPlayer.getId() == currentGame.getSecondPlayer().getId() ? 2: 3;
+        int sessionPlayerPlace = getPlayerPlace(sessionPlayer.getId(),
+                currentGame.getFirstPlayer().getId(), currentGame.getSecondPlayer().getId());
 
         //если это наблюдатель
         if (sessionPlayerPlace == 3) {
@@ -56,18 +92,16 @@ public class MoveController {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Клетка занята.");
         }
 
-
-        Move lastMove = moveRepository.findTopByGameOrderByIdDesc(currentGame);
-        Piece newPiece = sessionPlayerPlace == 1 ? currentGame.getFirstPlayerPiece() : currentGame.getSecondPlayerPiece();
-        Piece lastPiece = lastMove == null ? Piece.O : lastMove.getPiece(); // lastPiece = X, когда это первый ход и lastMove == null
-
-        System.out.println("lastPiece = " + lastPiece);
         //если сейчас ход игрока, сделавшего запрос (прошлый символ противоположный)
-        if (lastPiece == newPiece) {
+        Move lastMove = moveRepository.findTopByGameOrderByIdDesc(currentGame);
+        Piece newPiece = getNewPiece(sessionPlayerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
+        boolean isSessionPlayerTurn = isSessionPlayerTurn(newPiece, lastMove);
+
+        if (!isSessionPlayerTurn) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Сейчас не ваш ход.");
         }
 
-        System.out.println("newPiece = " + newPiece);
+        //System.out.println("playerPlace = " + sessionPlayerPlace + ", lastMove = " + lastMove.getPiece() + ", newPiece" + newPiece);
         //все проверки пройдены, добавление символа
         Move newMove = new Move(
                 currentGame,
