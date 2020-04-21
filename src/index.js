@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Game from './game.js';
 import {BrowserRouter, Switch, Route, Redirect} from "react-router-dom";
-
 import axios from "axios";
 axios.defaults.withCredentials = true;
 
@@ -137,8 +136,8 @@ class GamesList extends React.Component {
                 console.log(response.data);
             })
             .catch(error => {
-                console.log(JSON.stringify(error.response.data));
-                alert(JSON.stringify(error.response.data));
+                console.log(error);
+                alert(error);
             });
     }
 
@@ -146,7 +145,11 @@ class GamesList extends React.Component {
         let table = [];
         for (let i = 0; i < games.length; i++) {
             let rows = [];
-            rows.push(<th>{games[i].firstPlayer.userName}</th>); //игроки
+            let namesRow = games[i].firstPlayer.userName;
+            if (games[i].secondPlayer != null) {
+                namesRow += ', ' + games[i].secondPlayer.userName;
+            }
+            rows.push(<th>{namesRow}</th>); //игроки
             rows.push(<th>{games[i].gameStatus}</th>); //статус игры
             rows.push(<th>{games[i].gameType}</th>); //тип игры
             rows.push(<th><StartGameButton gameId={games[i].id}/></th>); //кнопка начала игры
@@ -196,7 +199,6 @@ class StartGameButton extends React.Component{
                     console.log(JSON.stringify(error.response.data));
                     alert(JSON.stringify(error.response.data));
                 }
-
             })
     }
 
