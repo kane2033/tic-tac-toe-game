@@ -7,6 +7,7 @@ import com.tictactoe.backend.Enum.Piece;
 import com.tictactoe.backend.Repository.IGameRepository;
 import com.tictactoe.backend.Repository.IMoveRepository;
 import com.tictactoe.backend.Request.AddMoveRequest;
+import com.tictactoe.backend.Service.MoveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,18 +26,8 @@ public class MoveController {
     @Autowired
     IGameRepository gameRepository;
 
-    public int getPlayerPlace(int sessionPlayerId, int firstPlayerId, int secondPlayerId) {
-        return sessionPlayerId == firstPlayerId ? 1 : sessionPlayerId == secondPlayerId ? 2 : 3;
-    }
-
-    public Piece getNewPiece(int sessionPlayerPlace, Piece firstPlayerPiece, Piece secondPlayerPiece) {
-        return sessionPlayerPlace == 1 ? firstPlayerPiece : secondPlayerPiece;
-    }
-
-    public boolean isSessionPlayerTurn(Piece newPiece, Move lastMove) {
-        Piece lastPiece = lastMove == null ? Piece.O : lastMove.getPiece(); // lastPiece = O, когда это первый ход и lastMove == null
-        return !(newPiece == lastPiece);
-    }
+    @Autowired
+    MoveService moveService;
 
     //запрос на получение сделанных ходов в определенной игре
     @GetMapping(path = "/list")
@@ -58,9 +49,9 @@ public class MoveController {
         Player sessionPlayer = (Player) session.getAttribute("player");
         Game currentGame = gameRepository.findById(gameId);
         Move lastMove = moveRepository.findTopByGameOrderByIdDesc(gameRepository.findById(gameId));
-        int playerPlace = getPlayerPlace(sessionPlayer.getId(), currentGame.getFirstPlayer().getId(), currentGame.getSecondPlayer().getId());
-        Piece newPiece = getNewPiece(playerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
-        boolean isTurn = isSessionPlayerTurn(newPiece, lastMove);
+        int playerPlace = moveService.getPlayerPlace(sessionPlayer.getId(), currentGame.getFirstPlayer().getId(), currentGame.getSecondPlayer().getId());
+        Piece newPiece = moveService.getNewPiece(playerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
+        boolean isTurn = moveService.isSessionPlayerTurn(newPiece, lastMove);
 
         return isTurn ? new ResponseEntity<>(HttpStatus.OK) :
                 new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
@@ -77,7 +68,7 @@ public class MoveController {
 
         Game currentGame = gameRepository.findById(addMoveRequest.getGameId());
         //получаем, каким конкретно игроком является отправивший запрос игрок (нужно для определения символа)
-        int sessionPlayerPlace = getPlayerPlace(sessionPlayer.getId(),
+        int sessionPlayerPlace = moveService.getPlayerPlace(sessionPlayer.getId(),
                 currentGame.getFirstPlayer().getId(), currentGame.getSecondPlayer().getId());
 
         //если это наблюдатель
@@ -93,8 +84,8 @@ public class MoveController {
 
         //если сейчас ход игрока, сделавшего запрос (прошлый символ противоположный)
         Move lastMove = moveRepository.findTopByGameOrderByIdDesc(currentGame);
-        Piece newPiece = getNewPiece(sessionPlayerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
-        boolean isSessionPlayerTurn = isSessionPlayerTurn(newPiece, lastMove);
+        Piece newPiece = moveService.getNewPiece(sessionPlayerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
+        boolean isSessionPlayerTurn = moveService.isSessionPlayerTurn(newPiece, lastMove);
 
         if (!isSessionPlayerTurn) {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Сейчас не ваш ход.");

@@ -64,4 +64,17 @@ public class GameService {
         }
         else return null; //означает отсутствие победителя
     }
+
+    //метод проверки на ничью:
+    //если все клетки заняты, то это считается ничьей
+    public boolean isDraw(Piece[][] squares) {
+        for (int i = 0; i < squares.length; i++) {
+            for (int j = 0; j < squares.length; j++) {
+                if (squares[i][j] == null) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 }

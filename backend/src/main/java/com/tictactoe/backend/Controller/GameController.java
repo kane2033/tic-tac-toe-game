@@ -84,6 +84,9 @@ public class GameController {
 
         //если нет второго игрока
         if (selectedGame.getGameStatus() == GameStatus.Waiting_Player2) {
+            if (firstPlayerFromGame.getId() == sessionPlayer.getId()) {
+                return  ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Второй игрок пока не подключился к игре №" + selectedGame.getId());
+            }
             selectedGame.setSecondPlayer(sessionPlayer);
             selectedGame.setGameStatus(GameStatus.In_Progress);
             gameRepository.save(selectedGame);
@@ -112,6 +115,21 @@ public class GameController {
     public Piece getWinner(@RequestBody AddMoveRequest checkMoveRequest) {
         Game game = gameService.getGameById(checkMoveRequest.getGameId());
         Piece[][] pieces = moveService.getPiecesByGame(game);
+        Piece winner = gameService.calculateWinner(pieces, checkMoveRequest.getX(), checkMoveRequest.getY());
+        if (winner != null) { //если есть победитель, статус игры меняется
+            GameStatus gameWinnerStatus = winner == game.getFirstPlayerPiece() ? GameStatus.Player1_Won :
+                    GameStatus.Player2_Won;
+            game.setGameStatus(gameWinnerStatus);
+            gameRepository.save(game);
+        }
         return gameService.calculateWinner(pieces, checkMoveRequest.getX(), checkMoveRequest.getY());
+    }
+
+    @GetMapping(path = "/draw")
+    public boolean isDraw(@RequestParam int gameId) {
+        Game game = gameService.getGameById(gameId);
+        Piece[][] pieces = moveService.getPiecesByGame(game);
+        boolean isDraw = gameService.isDraw(pieces);
+        return isDraw;
     }
 }

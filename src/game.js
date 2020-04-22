@@ -20,15 +20,6 @@ function Square(props) {
     );
 }
 
-//кнопка перезапуска игры, появляется при завершении игры
-function RestartButton(props) {
-    return (
-        <button className="button" onClick={props.onClick}>
-            Перезапуск
-        </button>
-    );
-}
-
 //класс доски, хранящий массив крестиков и ноликов
 //и состояние игры
 class Board extends React.Component {
@@ -121,13 +112,15 @@ class Board extends React.Component {
         if (move !== "") {
             //проверка на победителя
             let winner = await this.postRequest('/game/winner',this.state.gameId, move.x, move.y);
+            let isDraw = await this.getRequest('/game/draw', this.state.gameId);
             console.log("getLastMove winner = " + winner);
             let squares = this.state.squares;
             squares[move.x][move.y] = move.piece;
             this.setState({
                 squares: squares,
-                xIsNext: !this.state.xIsNext,
-                winner: winner
+                xIsNext: move.piece === 'X' ? 'X' : 'O',
+                winner: winner,
+                isDraw : isDraw
             });
         }
     }
@@ -150,12 +143,13 @@ class Board extends React.Component {
                 y = move.y;
                 squares[x][y] = move.piece;
             });
-            lastPiece = moves.pop();
+            lastPiece = moves.pop().piece;
             console.log(lastPiece);
         }
         else {
             lastPiece = 'O'; //для первого хода
         }
+        console.log("lastPiece = " + lastPiece);
 
         let currentGame = await this.getRequest('/game/', this.state.gameId);
         console.log('currentGame:' + JSON.stringify(currentGame));
@@ -173,7 +167,7 @@ class Board extends React.Component {
             status: currentGame.gameStatus
         });
 
-        this.isPlayerTurn();
+        //this.isPlayerTurn();
         this.interval = setInterval(this.isPlayerTurn, 500);
     }
 
@@ -197,40 +191,22 @@ class Board extends React.Component {
             squares[i][j] = newMove.piece; //вставка соответствующего символа
             //проверка на наличие победителя
             let winner = await this.postRequest('/game/winner', this.state.gameId, i, j);
+            let status = this.state.status;
+            if (winner !== "") {
+                status = newMove.game.gameStatus;
+            }
             console.log("winner = " + winner);
+            let isDraw = await this.getRequest('/game/draw', this.state.gameId);
             this.setState({ //изменение состояния игры
                 squares: squares, //новая версия массива клеток с только что поставленным символом
-                xIsNext: !this.state.xIsNext, //Должно меняться сервером
+                xIsNext: !this.state.xIsNext,
                 winner: winner, //проверка на победителя
-                isDraw: this.isDraw(squares), //проверка на ничью
+                isDraw: isDraw, //проверка на ничью,
+                status: status
             });
 
             this.interval = setInterval(this.isPlayerTurn, 500);
         }
-    }
-
-    //метод проверки на ничью:
-    //если все клетки заняты, то это считается ничьей
-    isDraw(squares) {
-        for (let i = 0; i < squares.length; i++) {
-            for (let j = 0; j < squares.length; j++) {
-                if (squares[i][j] === null) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    //метод перезапуска игры:
-    //возвращает состояние игры в изначальное положение
-    restartGame() {
-        this.setState({
-            squares: this.instantiate2DArray(this.state.boardLength),
-            winner: null,
-            xIsNext: true,
-            isDraw: false,
-        });
     }
 
     //метод отрисовки клетки
@@ -240,16 +216,6 @@ class Board extends React.Component {
                 value={this.state.squares[i][j]}
                 onClick={() => this.handleClick(i, j)}
             />
-        );
-    }
-
-    //метод отрисовки кнопки перезапуска;
-    //кнопка отрисовывается при нахождении победителя или ничьи
-    renderRestartButton(disabled) {
-        return disabled ? null : (
-          <RestartButton
-              onClick={() => this.restartGame()}
-          />
         );
     }
 
@@ -270,19 +236,15 @@ class Board extends React.Component {
     //отрисовывает игровое поле каждый клик
     render() {
         console.log("winner in render = " + this.state.winner);
-        let nextPiece = this.state.xIsNext ? 'X' : 'O';
         let status = this.state.firstPlayerName + ' VS ' + this.state.secondPlayerName
             + ', Статус: ' + this.state.status;
         status += !!this.state.winner ? (', Победил:' + this.state.winner) :
-            ', ходит: ' + nextPiece;
-
-        let isRestartDisabled = !this.state.winner && !this.state.isDraw;
+            '';
 
         return (
             <div>
                 <div className="status">{status}</div>
                 {this.renderBoard()}
-                {this.renderRestartButton(isRestartDisabled)}
             </div>
         );
     }

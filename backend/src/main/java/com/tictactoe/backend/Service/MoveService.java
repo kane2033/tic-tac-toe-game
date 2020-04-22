@@ -35,4 +35,17 @@ public class MoveService {
         return movesToPieces(getMovesByGame(game));
     }
 
+    public int getPlayerPlace(int sessionPlayerId, int firstPlayerId, int secondPlayerId) {
+        return sessionPlayerId == firstPlayerId ? 1 : sessionPlayerId == secondPlayerId ? 2 : 3;
+    }
+
+    public Piece getNewPiece(int sessionPlayerPlace, Piece firstPlayerPiece, Piece secondPlayerPiece) {
+        return sessionPlayerPlace == 1 ? firstPlayerPiece : secondPlayerPiece;
+    }
+
+    public boolean isSessionPlayerTurn(Piece newPiece, Move lastMove) {
+        Piece lastPiece = lastMove == null ? Piece.O : lastMove.getPiece(); // lastPiece = O, когда это первый ход и lastMove == null
+        return !(newPiece == lastPiece);
+    }
+
 }
