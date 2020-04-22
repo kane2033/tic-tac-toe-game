@@ -58,7 +58,6 @@ public class MoveController {
         Player sessionPlayer = (Player) session.getAttribute("player");
         Game currentGame = gameRepository.findById(gameId);
         Move lastMove = moveRepository.findTopByGameOrderByIdDesc(gameRepository.findById(gameId));
-
         int playerPlace = getPlayerPlace(sessionPlayer.getId(), currentGame.getFirstPlayer().getId(), currentGame.getSecondPlayer().getId());
         Piece newPiece = getNewPiece(playerPlace, currentGame.getFirstPlayerPiece(), currentGame.getSecondPlayerPiece());
         boolean isTurn = isSessionPlayerTurn(newPiece, lastMove);
@@ -101,7 +100,6 @@ public class MoveController {
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Сейчас не ваш ход.");
         }
 
-        //System.out.println("playerPlace = " + sessionPlayerPlace + ", lastMove = " + lastMove.getPiece() + ", newPiece" + newPiece);
         //все проверки пройдены, добавление символа
         Move newMove = new Move(
                 currentGame,

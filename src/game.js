@@ -42,7 +42,7 @@ class Board extends React.Component {
             secondPlayerName: null,
             xIsNext: true,
             squares: this.instantiate2DArray(props.boardLength),
-            winner: null,
+            winner: "",
             isDraw: false,
             state: null
         }
@@ -76,7 +76,7 @@ class Board extends React.Component {
             });
     }
 
-    postRequest(path, gameId, x, y) { //add async??
+    postRequest(path, gameId, x, y) {
         return axios
             .post('http://localhost:8080/api' + path, {
                 gameId : gameId,
@@ -104,6 +104,7 @@ class Board extends React.Component {
             .then(response => {
                 console.log(response.status);
                 clearInterval(this.interval);
+                console.log("this is player's turn");
                 this.getLastMove();
             })
             //цикл запрос продолжает циклично отправляться
@@ -112,19 +113,23 @@ class Board extends React.Component {
             })
     };
 
-    //запрос на получение и установку поставленного другим игроком символа
-    getLastMove() {
-        this.getRequest('/move/last', this.state.gameId).then(move => {
-            console.log("lastMove = " + move);
-            if (move != null) {
-                let squares = this.state.squares;
-                squares[move.x][move.y] = move.piece;
-                this.setState({
-                    squares: squares,
-                    xIsNext: !this.state.xIsNext
-                });
-            }
-        });
+    //запрос на загрузку нового состояния,
+    // измененного оппонентом
+    async getLastMove() {
+        let move = await this.getRequest('/move/last', this.state.gameId);
+        console.log("lastMove = " + JSON.stringify(move));
+        if (move !== "") {
+            //проверка на победителя
+            let winner = await this.postRequest('/game/winner',this.state.gameId, move.x, move.y);
+            console.log("getLastMove winner = " + winner);
+            let squares = this.state.squares;
+            squares[move.x][move.y] = move.piece;
+            this.setState({
+                squares: squares,
+                xIsNext: !this.state.xIsNext,
+                winner: winner
+            });
+        }
     }
 
     interval = 0; //переменная интервала
@@ -153,7 +158,6 @@ class Board extends React.Component {
         }
 
         let currentGame = await this.getRequest('/game/', this.state.gameId);
-        //let currentGame =  this.getRequest('/game/', this.state.gameId);
         console.log('currentGame:' + JSON.stringify(currentGame));
 
         //установка состояний поля
@@ -183,19 +187,21 @@ class Board extends React.Component {
     async handleClick(i, j) {
         let squares = this.state.squares.slice();
         //если есть победитель или поле заполнено, клик игнорируется
-        if (this.state.winner || squares[i][j]) {
+        if (!!this.state.winner || squares[i][j]) {
             return;
         }
 
         //запрос на поставку знака
         let newMove = await this.postRequest('/move/create', this.state.gameId, i, j);
-        if (newMove != null) {
-            console.log('handleClick - setState; newMove = ' + newMove.piece);
+        if (!!newMove) {
             squares[i][j] = newMove.piece; //вставка соответствующего символа
+            //проверка на наличие победителя
+            let winner = await this.postRequest('/game/winner', this.state.gameId, i, j);
+            console.log("winner = " + winner);
             this.setState({ //изменение состояния игры
                 squares: squares, //новая версия массива клеток с только что поставленным символом
                 xIsNext: !this.state.xIsNext, //Должно меняться сервером
-                winner: this.calculateWinner(squares, i, j, this.state.winCondition), //проверка на победителя
+                winner: winner, //проверка на победителя
                 isDraw: this.isDraw(squares), //проверка на ничью
             });
 
@@ -263,11 +269,14 @@ class Board extends React.Component {
 
     //отрисовывает игровое поле каждый клик
     render() {
+        console.log("winner in render = " + this.state.winner);
         let nextPiece = this.state.xIsNext ? 'X' : 'O';
         let status = this.state.firstPlayerName + ' VS ' + this.state.secondPlayerName
-            + ', Статус: ' + this.state.status + ', ходит: ' + nextPiece;
+            + ', Статус: ' + this.state.status;
+        status += !!this.state.winner ? (', Победил:' + this.state.winner) :
+            ', ходит: ' + nextPiece;
 
-        let isRestartDisabled = this.state.winner == null && this.state.isDraw === false;
+        let isRestartDisabled = !this.state.winner && !this.state.isDraw;
 
         return (
             <div>
@@ -276,50 +285,6 @@ class Board extends React.Component {
                 {this.renderRestartButton(isRestartDisabled)}
             </div>
         );
-    }
-
-    //проверка победителя в заданном направлении
-    //d1 и d2 - это направление проверки
-    //пр.: d1 = 0; d2 = 1 => проверка идет по горизонтали вправо
-    //d1 = -1; d2 = -1; => проверка идет по диагонали влево вверх
-    checkWinDirection(squares, i, j, d1, d2, winCondition) {
-        let score = 1;
-        let symbol = squares[i][j];
-        let x = i;
-        let y = j;
-        x += d1;
-        y += d2;
-        //пока не вышли из границ поля и проверяемый на победу символ присутствует, считаются очки и проверяется дальше
-        while ((x >= 0 && y >= 0 && x < squares.length && y < squares.length) && (squares[x][y] === symbol)) {
-            score++;
-            x += d1;
-            y += d2;
-        }
-        //если в ряд набралось достаточно победителей, возвращает победителя
-        if (score === winCondition) {
-            return symbol === 'X' ? 'X' : 'O';
-        }
-        else return null; //означает отсутствие победителя
-    }
-
-    //проверка победителя
-    calculateWinner(squares, i, j, winCondition) {
-        let winner = null;
-        let directions = [ //массив всех направлений проверки по часовой стрелке
-            [-1, -1],
-            [-1, 0],
-            [-1, 1],
-            [0, 1],
-            [1, 1],
-            [1, 0],
-            [1, -1],
-            [0, -1]
-        ];
-        //перебор всех возможных вариантов (их 8):
-        for (let k = 0; winner == null && k < directions.length; k++) {
-            winner = this.checkWinDirection(squares, i, j, directions[k][0], directions[k][1], winCondition);
-        }
-        return winner;
     }
 }
 

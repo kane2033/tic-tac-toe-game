@@ -7,6 +7,9 @@ import com.tictactoe.backend.Enum.Piece;
 import com.tictactoe.backend.Repository.IGameRepository;
 import com.tictactoe.backend.Repository.IPlayerRepository;
 import com.tictactoe.backend.Request.AddGameRequest;
+import com.tictactoe.backend.Request.AddMoveRequest;
+import com.tictactoe.backend.Service.GameService;
+import com.tictactoe.backend.Service.MoveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,21 @@ public class GameController {
 
     @Autowired
     IPlayerRepository playerRepository;
+
+    @Autowired
+    GameService gameService;
+
+    @Autowired
+    MoveService moveService;
+
+//    @Autowired
+//    IMoveRepository moveRepository;
+//
+//    @Autowired
+//    GameService gameService = new GameService(gameRepository);
+//
+//    @Autowired
+//    MoveService moveService = new MoveService(moveRepository);
 
     //создается игра от имени игрока сессии с параметрами, переданными в пост запрос
     @PostMapping(path = "/create")
@@ -60,7 +78,7 @@ public class GameController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Имя не введено");
         }
 
-        Game selectedGame = gameRepository.findById(gameId);
+        Game selectedGame = gameService.getGameById(gameId);
         Player firstPlayerFromGame = selectedGame.getFirstPlayer();
         Player secondPlayerFromGame = selectedGame.getSecondPlayer();
 
@@ -86,6 +104,14 @@ public class GameController {
     //запрос на получение сущности игры
     @GetMapping(path = "/")
     public Game getGameById(@RequestParam int gameId) {
-        return gameRepository.findById(gameId);
+        return gameService.getGameById(gameId);
+    }
+
+    //запрос на поиск победителя
+    @PostMapping(path = "/winner")
+    public Piece getWinner(@RequestBody AddMoveRequest checkMoveRequest) {
+        Game game = gameService.getGameById(checkMoveRequest.getGameId());
+        Piece[][] pieces = moveService.getPiecesByGame(game);
+        return gameService.calculateWinner(pieces, checkMoveRequest.getX(), checkMoveRequest.getY());
     }
 }
